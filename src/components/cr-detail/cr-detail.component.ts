@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { CrApiService } from '../../api/cr-api.service';
@@ -20,7 +20,7 @@ import { formatMoney } from '../../common/money.util';
 	imports: [CommonModule, ReactiveFormsModule],
 	templateUrl: './cr-detail.component.html',
 })
-export class CrDetailComponent implements OnInit {
+export class CrDetailComponent implements OnInit, OnChanges {
 	@Input() id!: string;
 
 	state: ViewState<CrDetail> = idle();
@@ -35,13 +35,22 @@ export class CrDetailComponent implements OnInit {
 		void this.load();
 	}
 
+	ngOnChanges(changes: SimpleChanges): void {
+		if (changes['id'] && !changes['id'].firstChange) {
+			void this.load();
+		}
+	}
+
 	async load(): Promise<void> {
+		const id = this.id;
 		this.state = loading();
 		this.actionError = undefined;
 		try {
-			const detail = await this.api.getChangeRequest(this.session.user, this.id);
+			const detail = await this.api.getChangeRequest(this.session.user, id);
+			if (id !== this.id) return;
 			this.state = { status: 'loaded', data: detail };
 		} catch (err) {
+			if (id !== this.id) return;
 			this.state = { status: 'error', data: null, error: (err as Error).message };
 		}
 	}
@@ -56,8 +65,8 @@ export class CrDetailComponent implements OnInit {
 
 	/** Approval timeline, oldest-first. */
 	get timeline(): TimelineEntry[] {
-		// TODO: return the audit entries ordered chronologically (oldest first).
-		return this.detail?.audit ?? [];
+		const audit = this.detail?.audit ?? [];
+		return [...audit].sort((a, b) => Date.parse(a.at) - Date.parse(b.at));
 	}
 
 	/** Whether the current user may approve the loaded CR. */
