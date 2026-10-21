@@ -55,7 +55,6 @@ export class CrListComponent implements OnInit {
 	/** Rows to render, after applying the active status filter. */
 	get visibleRows(): CrSummary[] {
 		const rows = this.state.data ?? [];
-		// TODO: narrow `rows` by `this.statusFilter` ('ALL' shows everything).
-		return rows;
+		return this.statusFilter === 'ALL' ? rows : rows.filter((row) => row.status === this.statusFilter);
 	}
 }
