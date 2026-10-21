@@ -31,4 +31,24 @@ describe('CrDetailComponent', () => {
 		const approveBtn: HTMLButtonElement = fixture.nativeElement.querySelector('.cr-actions__approve');
 		expect(approveBtn.disabled).toBe(true);
 	});
+
+	it('offers enabled actions to an approver on a pending CR', async () => {
+		const fixture = await render(users.approver, 'CR-1');
+		const approveBtn: HTMLButtonElement = fixture.nativeElement.querySelector('.cr-actions__approve');
+		expect(approveBtn.disabled).toBe(false);
+		expect(fixture.nativeElement.querySelector('.cr-actions__reject')).not.toBeNull();
+	});
+
+	it('shows the diff but no reject action to a read-only viewer', async () => {
+		const fixture = await render(users.viewer, 'CR-1');
+		expect(fixture.nativeElement.querySelector('.cr-diff__table')).not.toBeNull();
+		expect(fixture.nativeElement.querySelector('.cr-actions__reject')).toBeNull();
+	});
+
+	it('does not offer actions to an approver when the CR is already applied', async () => {
+		const fixture = await render(users.approver, 'CR-2');
+		const approveBtn: HTMLButtonElement = fixture.nativeElement.querySelector('.cr-actions__approve');
+		expect(approveBtn.disabled).toBe(true);
+		expect(fixture.nativeElement.querySelector('.cr-actions__reject')).toBeNull();
+	});
 });
