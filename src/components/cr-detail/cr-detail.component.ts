@@ -1,6 +1,6 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CrApiService } from '../../api/cr-api.service';
 import { SessionService } from '../../session/session.service';
 import { CrDetail, TimelineEntry } from '../../models/cr.models';
@@ -22,12 +22,12 @@ import { formatMoney } from '../../common/money.util';
 })
 export class CrDetailComponent implements OnInit, OnChanges {
 	@Input() id!: string;
+	@Output() actionDone = new EventEmitter<string>();
 
 	state: ViewState<CrDetail> = idle();
 	submitting = false;
 	actionError?: string;
-	// TODO: add validation so the form is invalid until a reason is entered.
-	rejectControl = new FormControl('', { nonNullable: true });
+	rejectControl = new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.pattern(/\S/)] });
 
 	constructor(private readonly api: CrApiService, private readonly session: SessionService) {}
 
@@ -84,13 +84,38 @@ export class CrDetailComponent implements OnInit, OnChanges {
 	}
 
 	async approve(): Promise<void> {
-		// TODO: perform the approve action through the API and reflect the outcome in the view.
-		throw new Error('approve() not implemented');
+		if (!this.canApprove || this.submitting) return;
+		await this.runAction(() => this.api.approve(this.session.user, this.id, new Date().toISOString()));
 	}
 
 	async reject(): Promise<void> {
-		// TODO: require a valid rejectControl, then perform the reject action through the API and
-		//       reflect the outcome in the view.
-		throw new Error('reject() not implemented');
+		if (!this.canReject || this.submitting) return;
+		if (this.rejectControl.invalid) {
+			this.rejectControl.markAsTouched();
+			return;
+		}
+		const reason = this.rejectControl.value.trim();
+		await this.runAction(() => this.api.reject(this.session.user, this.id, new Date().toISOString(), reason));
+	}
+
+	private async runAction(call: () => Promise<CrDetail>): Promise<void> {
+		const id = this.id;
+		this.submitting = true;
+		this.actionError = undefined;
+		try {
+			const updated = await call();
+			if (id !== this.id) return;
+			this.state = { status: 'loaded', data: updated };
+			this.rejectControl.reset();
+		} catch (err) {
+			if (id !== this.id) return;
+			await this.load();
+			if (id === this.id && this.detail?.status === 'PENDING_APPROVAL') {
+				this.actionError = `Action failed: ${(err as Error).message}. Nothing was changed, please try again.`;
+			}
+		} finally {
+			this.submitting = false;
+			this.actionDone.emit(id);
+		}
 	}
 }
