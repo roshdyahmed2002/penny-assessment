@@ -21,12 +21,16 @@
 			<h3>Proposed changes</h3>
 			<table class="cr-diff__table">
 				<thead>
-					<tr><th>SKU</th><th>Change</th><th>Before</th><th>After</th></tr>
+					<tr>
+						<th>SKU</th><th>Change</th><th>Description before</th><th>Description after</th><th>Before</th><th>After</th>
+					</tr>
 				</thead>
 				<tbody>
 					<tr *ngFor="let row of diff" class="cr-diff__row" [attr.data-kind]="row.kind">
 						<td>{{ row.sku }}</td>
 						<td class="cr-diff__kind">{{ row.kind }}</td>
+						<td>{{ row.baseline?.description ?? '—' }}</td>
+						<td>{{ row.proposed?.description ?? '—' }}</td>
 						<td>{{ row.baseline ? row.baseline.quantity + ' × ' + fmt(row.baseline.unitPrice) : '—' }}</td>
 						<td>{{ row.proposed ? row.proposed.quantity + ' × ' + fmt(row.proposed.unitPrice) : '—' }}</td>
 					</tr>
@@ -41,7 +45,7 @@
 				<li *ngFor="let entry of timeline" class="cr-timeline__entry">
 					<span class="cr-timeline__action">{{ entry.action }}</span>
 					<span class="cr-timeline__by">{{ entry.byUserId }}</span>
-					<span class="cr-timeline__at">{{ entry.at }}</span>
+					<span class="cr-timeline__at">{{ entry.at | date: 'medium' }}</span>
 					<span *ngIf="entry.note" class="cr-timeline__note">{{ entry.note }}</span>
 				</li>
 			</ol>

@@ -42,6 +42,13 @@ describe('CrDetailComponent', () => {
 		expect(actions).toEqual(['CREATE', 'SUBMIT', 'SEND_FOR_APPROVAL']);
 	});
 
+	it('shows the before and after descriptions for CR-2', async () => {
+		const fixture = await render(users.approver, 'CR-2');
+		const changedRow: HTMLTableRowElement = fixture.nativeElement.querySelector('.cr-diff__row[data-kind="changed"]');
+		expect(changedRow.textContent).toContain('Widget B');
+		expect(changedRow.textContent).toContain('Widget B (new supplier)');
+	});
+
 	it('shows a not-found error for a change request outside the user org', async () => {
 		const fixture = await render(users.otherOrg, 'CR-1');
 		expect(fixture.nativeElement.querySelector('.cr-detail__error').textContent).toContain('Not found');

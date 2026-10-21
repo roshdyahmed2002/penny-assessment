@@ -55,3 +55,19 @@ button:disabled {
 .cr-diff__row[data-kind='removed'] {
 	background: #fdecea;
 }
+.cr-timeline__entry {
+	display: grid;
+	grid-template-columns: max-content max-content minmax(0, 1fr);
+	gap: 0.25rem 1rem;
+	padding: 0.5rem 0;
+	border-bottom: 1px solid #eee;
+}
+.cr-timeline__action {
+	font-weight: 600;
+}
+.cr-timeline__at {
+	color: #555;
+}
+.cr-timeline__note {
+	grid-column: 2 / -1;
+}
